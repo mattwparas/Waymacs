@@ -7,6 +7,8 @@ use std::time::Instant;
 use termion::color;
 use termion::event::Key;
 
+use crate::light_worker::change_random_light;
+
 const STATUS_FG_COLOR: color::Rgb = color::Rgb(63, 63, 63);
 const STATUS_BG_COLOR: color::Rgb = color::Rgb(239, 239, 239);
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -91,6 +93,15 @@ impl Editor {
         }
     }
 
+    // Inserts the given string where the current cursor is
+    // then moves the cursor to the right
+    pub fn insert_at_cursor_position(&mut self, s: String) {
+        for c in s.chars() {
+            self.document.insert(&self.cursor_position, c);
+            self.move_cursor(Key::Right);
+        }
+    }
+
     fn refresh_screen(&mut self) -> Result<(), std::io::Error> {
         Terminal::cursor_hide();
         Terminal::cursor_position(&Position::default());
@@ -172,6 +183,8 @@ impl Editor {
         self.highlighted_word = None;
     }
     fn process_keypress(&mut self) -> Result<(), std::io::Error> {
+        change_random_light();
+
         let pressed_key = Terminal::read_key()?;
         match pressed_key {
             Key::Ctrl('q') => {
