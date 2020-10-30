@@ -14,7 +14,7 @@ use std::time::Duration;
 use crate::utilities::set_random_light;
 
 const WORKER_THREADS: usize = 1;
-const SLEEP_TIME: u64 = 200;
+// const SLEEP_TIME: u64 = 200;
 
 // This isn't amazing but it definitely gets the job done
 lazy_static! {
@@ -33,7 +33,7 @@ lazy_static! {
     // Give all of the possible lights
     static ref CONTROL_LIGHTS: Vec<Light> = {
         let username = env::var("HUE_TOKEN").unwrap();
-        let light_names = ["Hue play 1", "Hue play 2"];
+        let light_names = ["Hue Play 1", "Hue play 2"];
 
         // Create a bridge with IP address and username.
         let bridge = Bridge::new(IpAddr::V4(Ipv4Addr::new(192, 168, 1, 2)), username);
@@ -71,7 +71,6 @@ pub fn spawn_workers() {
         THREAD_STACK.lock().unwrap().push(thread::spawn(move || {
             while let Ok(()) = CHANNEL.1.recv() {
                 send_to_bridge();
-                thread::sleep(Duration::from_millis(SLEEP_TIME));
             }
         }));
     }
