@@ -303,6 +303,8 @@ impl Editor {
                 if self.keystroke_count == 50 {
                     self.do_you_want_to_purchase_sublime();
                     self.keystroke_count = 0;
+                } else {
+                    self.keystroke_count += 1;
                 }
 
                 let char_number = self.document.insert(&self.cursor_position, c);
@@ -334,7 +336,6 @@ impl Editor {
             | Key::Home => self.move_cursor(pressed_key),
             _ => (),
         }
-        self.keystroke_count += 1;
         self.scroll();
         if self.quit_times < self.quit_time_total {
             self.quit_times = self.quit_time_total;

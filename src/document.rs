@@ -39,7 +39,8 @@ impl Document {
     }
     pub fn change_row_to_snake_case(&mut self, position: &Position) {
         if let Some(r) = self.rows.get_mut(position.y) {
-            r.change_line_to_snake_case();
+            // r.change_line_to_snake_case();
+            r.change_word_style();
         }
     }
     pub fn set_rows(&mut self, rows: Vec<Row>) {
@@ -72,18 +73,22 @@ impl Document {
         }
         self.dirty = true;
         if c == '\n' {
-            let prev_len = self.rows[at.y].len();
-            self.change_row_to_snake_case(at);
-            let new_position = Position {
-                x: self.rows[at.y].len(),
-                y: at.y,
-            };
+            if let Some(prev_len) = self.rows.get(at.y) {
+                let prev_len = prev_len.len();
+                self.change_row_to_snake_case(at);
+                let new_position = Position {
+                    x: self.rows[at.y].len(),
+                    y: at.y,
+                };
 
-            if self.rows[at.y].len() > prev_len {
-                moved = self.rows[at.y].len() + 1 - prev_len;
+                if self.rows[at.y].len() > prev_len {
+                    moved = self.rows[at.y].len() + 1 - prev_len;
+                }
+
+                self.insert_newline(&new_position);
+            } else {
+                self.insert_newline(at);
             }
-
-            self.insert_newline(&new_position);
         } else if at.y == self.rows.len() {
             let mut row = Row::default();
             row.insert(0, c);

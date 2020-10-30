@@ -2,7 +2,8 @@ use crate::highlighting;
 use crate::HighlightingOptions;
 use crate::SearchDirection;
 // use inflector::to_snake_case;
-use inflector::cases::snakecase::to_snake_case;
+use inflector::cases::camelcase::{is_camel_case, to_camel_case};
+use inflector::cases::snakecase::{is_snake_case, to_snake_case};
 use std::cmp;
 use termion::color;
 use unicode_segmentation::UnicodeSegmentation;
@@ -76,6 +77,34 @@ impl Row {
             .string
             .split_whitespace()
             .map(to_snake_case)
+            .collect::<Vec<String>>()
+            .join(" ");
+
+        self.len = words.len();
+        self.string = words;
+    }
+
+    pub fn change_line_to_camel_case(&mut self) {
+        let words: String = self
+            .string
+            .split_whitespace()
+            .map(to_snake_case)
+            .collect::<Vec<String>>()
+            .join(" ");
+
+        self.len = words.len();
+        self.string = words;
+    }
+
+    pub fn change_word_style(&mut self) {
+        let words: String = self
+            .string
+            .split_whitespace()
+            .map(|x| match x {
+                x if is_camel_case(x) => to_snake_case(x),
+                x if is_snake_case(x) => to_camel_case(x),
+                _ => x.to_string(),
+            })
             .collect::<Vec<String>>()
             .join(" ");
 
