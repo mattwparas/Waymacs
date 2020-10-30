@@ -1,11 +1,13 @@
 use crate::highlighting;
 use crate::HighlightingOptions;
 use crate::SearchDirection;
+// use inflector::to_snake_case;
+use inflector::cases::snakecase::to_snake_case;
 use std::cmp;
 use termion::color;
 use unicode_segmentation::UnicodeSegmentation;
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Row {
     string: String,
     highlighting: Vec<highlighting::Type>,
@@ -25,6 +27,9 @@ impl From<&str> for Row {
 }
 
 impl Row {
+    pub fn string(&self) -> &str {
+        self.string.as_str()
+    }
     pub fn render(&self, start: usize, end: usize) -> String {
         let end = cmp::min(end, self.string.len());
         let start = cmp::min(start, end);
@@ -65,6 +70,19 @@ impl Row {
     pub fn is_empty(&self) -> bool {
         self.len == 0
     }
+
+    pub fn change_line_to_snake_case(&mut self) {
+        let words: String = self
+            .string
+            .split_whitespace()
+            .map(to_snake_case)
+            .collect::<Vec<String>>()
+            .join(" ");
+
+        self.len = words.len();
+        self.string = words;
+    }
+
     pub fn insert(&mut self, at: usize, c: char) {
         if at >= self.len() {
             self.string.push(c);

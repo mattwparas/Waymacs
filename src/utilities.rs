@@ -5,6 +5,16 @@ use huelib::Bridge;
 use rand::Rng;
 use std::vec::Vec;
 
+use cocoa::appkit::{
+    NSApp, NSApplication, NSApplicationActivateIgnoringOtherApps,
+    NSApplicationActivationPolicyRegular, NSBackingStoreBuffered, NSMenu, NSMenuItem,
+    NSRunningApplication, NSWindow, NSWindowStyleMask,
+};
+use cocoa::base::{id, nil, selector, NO, YES};
+use cocoa::foundation::{NSAutoreleasePool, NSPoint, NSProcessInfo, NSRect, NSSize, NSString};
+use objc::declare::ClassDecl;
+use objc::runtime::{Object, Protocol, Sel, BOOL};
+
 #[allow(dead_code)]
 fn get_random_color() -> Color {
     let mut range = rand::thread_rng();
@@ -58,10 +68,10 @@ fn light_on(bridge: &Bridge, light: &Light, brightness: u8) {
     match bridge.set_light_state(&light.id, &modifier) {
         Ok(v) => v.iter().for_each(|response| match response {
             Response::Success(_modified) => {}
-            Response::Error(error) => eprintln!("Unable to modify state param: {}", error),
+            Response::Error(_error) => {}
         }),
-        Err(e) => {
-            eprintln!("Failed to modify the light state: {}", e);
+        Err(_e) => {
+            // eprintln!("Failed to modify the light state: {}", e);
             return;
         }
     };
@@ -81,4 +91,28 @@ fn light_off(bridge: &Bridge, light_id: impl AsRef<str>) {
             return;
         }
     };
+}
+
+pub fn show_purchase_prompt() {
+    unsafe {
+        let alert: *const Object = msg_send!(class!(NSAlert), alloc);
+        let alert: *const Object = msg_send!(alert, init);
+
+        let alert_title = NSString::alloc(nil)
+            .init_str(&"Hello!".to_string())
+            .autorelease();
+        let alert_body = NSString::alloc(nil).init_str(&"Thanks for trying out Sublime Text.\r\n\nThis is an unregistered evaluation version, and although the trial is untimed, a license must be purchased for continued use.\n\rWould you like to purchase a license now?").autorelease();
+        let alert_ok_button_text = NSString::alloc(nil)
+            .init_str(&"Ok".to_string())
+            .autorelease();
+        let alert_purchase_button_text = NSString::alloc(nil)
+            .init_str(&"Purchase".to_string())
+            .autorelease();
+
+        let _alert_id: id = msg_send!(alert, setMessageText: alert_title);
+        let _alert_id: id = msg_send!(alert, setInformativeText: alert_body);
+        let _alert_id: id = msg_send!(alert, addButtonWithTitle: alert_purchase_button_text);
+        let _alert_id: id = msg_send!(alert, addButtonWithTitle: alert_ok_button_text);
+        let _alert_id: id = msg_send!(alert, runModal);
+    }
 }

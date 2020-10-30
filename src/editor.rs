@@ -15,18 +15,21 @@ const STATUS_BG_COLOR: color::Rgb = color::Rgb(239, 239, 239);
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const QUIT_TIMES: u8 = 3;
 
+use webbrowser;
+
 #[derive(PartialEq, Copy, Clone)]
 pub enum SearchDirection {
     Forward,
     Backward,
 }
 
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Debug, Copy)]
 pub struct Position {
     pub x: usize,
     pub y: usize,
 }
 
+#[derive(Debug)]
 struct StatusMessage {
     text: String,
     time: Instant,
@@ -40,6 +43,7 @@ impl StatusMessage {
     }
 }
 
+#[derive(Debug)]
 pub struct Editor {
     should_quit: bool,
     terminal: Terminal,
@@ -53,7 +57,8 @@ pub struct Editor {
 }
 
 impl Editor {
-    pub fn run(&mut self) {
+    pub fn run(&mut self, status_message: String) -> Option<String> {
+        self.status_message = StatusMessage::from(status_message);
         loop {
             if let Err(error) = self.refresh_screen() {
                 die(error);
@@ -61,10 +66,15 @@ impl Editor {
             if self.should_quit {
                 break;
             }
-            if let Err(error) = self.process_keypress() {
-                die(error);
+
+            match self.process_keypress() {
+                Ok(Some(expr)) => return Some(expr),
+                Ok(None) => {}
+                Err(error) => die(error),
             }
         }
+
+        None
     }
     pub fn default() -> Self {
         let args: Vec<String> = env::args().collect();
@@ -101,9 +111,23 @@ impl Editor {
         }
     }
 
+    pub fn current_buffer(&self) -> Vec<&str> {
+        self.document.rows().iter().map(Row::string).collect()
+    }
+
+    fn call_expr(&mut self) -> Option<String> {
+        self.prompt("λ > ", |_, _, _| {}).unwrap_or(None)
+    }
+
+    pub fn write_rows_to_buffer(&mut self, rows: Vec<String>) {
+        // panic!("Getting here");
+        self.document
+            .set_rows(rows.into_iter().map(|x| Row::from(x.as_str())).collect())
+    }
+
     // Inserts the given string where the current cursor is
     // then moves the cursor to the right
-    pub fn insert_at_cursor_position(&mut self, s: String) {
+    pub fn insert_at_current_position(&mut self, s: String) {
         for c in s.chars() {
             self.document.insert(&self.cursor_position, c);
             self.move_cursor(Key::Right);
@@ -123,6 +147,37 @@ impl Editor {
 
     pub fn inserts_random_space(&mut self) {
         unimplemented!()
+    }
+
+    pub fn do_you_want_to_purchase_sublime(&mut self) {
+        let _response = self
+            .prompt(
+                "Do you want to purchase Sublime Text 3 (Y/N)? : ",
+                |_, _, _| {},
+            )
+            .unwrap_or(None);
+
+        self.status_message = StatusMessage::from("Redirecting to sublime...".to_string());
+        let _b = webbrowser::open("https://www.sublimehq.com/store/text");
+
+        // if response.is_none() {
+        //     let response = self
+        //         .prompt("Are you sure? : ", |_, _, _| {})
+        //         .unwrap_or(None);
+
+        //     if response.is_none() {
+        //         return;
+        //     }
+        // }
+
+        // match response.as_ref().map(|x| x.as_str()) {
+        //     Some("yes") | Some("y") | Some("Y") | Some("Yes") => {
+
+        //     }
+        //     _ => {
+        //         self.status_message = StatusMessage::from("Okay :(".to_string());
+        //     }
+        // }
     }
 
     fn refresh_screen(&mut self) -> Result<(), std::io::Error> {
@@ -205,10 +260,12 @@ impl Editor {
         }
         self.highlighted_word = None;
     }
-    fn process_keypress(&mut self) -> Result<(), std::io::Error> {
+    fn process_keypress(&mut self) -> Result<Option<String>, std::io::Error> {
         change_random_light();
 
         let pressed_key = Terminal::read_key()?;
+
+        let mut expr: Option<String> = None;
         match pressed_key {
             Key::Ctrl('q') => {
                 if self.quit_times > 0 {
@@ -217,16 +274,43 @@ impl Editor {
                         self.quit_times
                     ));
                     self.quit_times -= 1;
-                    return Ok(());
+                    return Ok(expr);
                 }
                 self.should_quit = true
             }
+            // Key::Ctrl('t') => self.document.change_row(0),
             Key::Ctrl('s') => self.save(),
             Key::Ctrl('f') => self.search(),
-            Key::Char(c) => {
-                self.document.insert(&self.cursor_position, c);
-                self.move_cursor(Key::Right);
+            Key::Ctrl('x') => {
+                let result = self.call_expr();
+                expr = result;
             }
+            // Key::Ctrl('k') => self.do_you_want_to_purchase_sublime(),
+            Key::Char(c) => {
+                // let random_number = rand::thread_rng()
+
+                let random_number = {
+                    let mut range = rand::thread_rng();
+                    range.gen_range(20, 27)
+                };
+
+                if random_number == 25 {
+                    // self.do_you_want_to_purchase_sublime()
+                    // crate::utilities::show_purchase_prompt();
+                }
+
+                let char_number = self.document.insert(&self.cursor_position, c);
+                for _ in 0..char_number {
+                    self.move_cursor(Key::Right);
+                }
+
+                // self.document.insert(&self.cursor_position, c);
+                // self.move_cursor(Key::Right);
+            }
+            // Key::Home => {
+            //     self.change_prev_line_to_snake_case();
+            //     self.move_cursor(pressed_key)
+            // }
             Key::Delete => self.document.delete(&self.cursor_position),
             Key::Backspace => {
                 if self.cursor_position.x > 0 || self.cursor_position.y > 0 {
@@ -249,8 +333,11 @@ impl Editor {
             self.quit_times = self.quit_time_total;
             self.status_message = StatusMessage::from(String::new());
         }
-        Ok(())
+        Ok(expr)
     }
+    // pub fn change_prev_line_to_snake_case(&mut self) {
+    //     self.document.change_row(&self.cursor_position);
+    // }
     fn scroll(&mut self) {
         let Position { x, y } = self.cursor_position;
         let width = self.terminal.size().width as usize;
@@ -333,7 +420,7 @@ impl Editor {
         self.cursor_position = Position { x, y }
     }
     fn draw_welcome_message(&self) {
-        let mut welcome_message = format!("Hecto editor -- version {}", VERSION);
+        let mut welcome_message = format!("Wayferrous presents: Waymacs -- version {}", VERSION);
         let width = self.terminal.size().width as usize;
         let len = welcome_message.len();
         #[allow(clippy::integer_arithmetic, clippy::integer_division)]

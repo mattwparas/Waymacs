@@ -1,9 +1,10 @@
+#[derive(Debug)]
 pub struct FileType {
     name: String,
     hl_opts: HighlightingOptions,
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct HighlightingOptions {
     numbers: bool,
     strings: bool,

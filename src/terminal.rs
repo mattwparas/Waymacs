@@ -1,17 +1,26 @@
 use crate::Position;
+use std::fmt;
 use std::io::{self, stdout, Write};
 use termion::color;
 use termion::event::Key;
 use termion::input::TermRead;
 use termion::raw::{IntoRawMode, RawTerminal};
 
+#[derive(Debug)]
 pub struct Size {
     pub width: u16,
     pub height: u16,
 }
+
 pub struct Terminal {
     size: Size,
     _stdout: RawTerminal<std::io::Stdout>,
+}
+
+impl fmt::Debug for Terminal {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Terminal: {:?}", self.size)
+    }
 }
 
 impl Terminal {

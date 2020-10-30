@@ -5,7 +5,7 @@ use crate::SearchDirection;
 use std::fs;
 use std::io::{Error, Write};
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Document {
     rows: Vec<Row>,
     pub file_name: Option<String>,
@@ -34,6 +34,17 @@ impl Document {
     pub fn row(&self, index: usize) -> Option<&Row> {
         self.rows.get(index)
     }
+    pub fn rows(&self) -> &Vec<Row> {
+        &self.rows
+    }
+    pub fn change_row_to_snake_case(&mut self, position: &Position) {
+        if let Some(r) = self.rows.get_mut(position.y) {
+            r.change_line_to_snake_case();
+        }
+    }
+    pub fn set_rows(&mut self, rows: Vec<Row>) {
+        self.rows = rows;
+    }
     pub fn is_empty(&self) -> bool {
         self.rows.is_empty()
     }
@@ -54,13 +65,25 @@ impl Document {
         #[allow(clippy::integer_arithmetic)]
         self.rows.insert(at.y + 1, new_row);
     }
-    pub fn insert(&mut self, at: &Position, c: char) {
+    pub fn insert(&mut self, at: &Position, c: char) -> usize {
+        let mut moved = 1;
         if at.y > self.rows.len() {
-            return;
+            return moved;
         }
         self.dirty = true;
         if c == '\n' {
-            self.insert_newline(at);
+            let prev_len = self.rows[at.y].len();
+            self.change_row_to_snake_case(at);
+            let new_position = Position {
+                x: self.rows[at.y].len(),
+                y: at.y,
+            };
+
+            if self.rows[at.y].len() > prev_len {
+                moved = self.rows[at.y].len() + 1 - prev_len;
+            }
+
+            self.insert_newline(&new_position);
         } else if at.y == self.rows.len() {
             let mut row = Row::default();
             row.insert(0, c);
@@ -71,6 +94,7 @@ impl Document {
             row.insert(at.x, c);
         }
         self.unhighlight_rows(at.y);
+        moved
     }
 
     fn unhighlight_rows(&mut self, start: usize) {

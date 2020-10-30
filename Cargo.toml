@@ -1,7 +1,7 @@
 [package]
-name = "hecto"
+name = "Wayferrous"
 version = "0.1.0"
-authors = ["Philipp Flenker <hello@philippflenker.com>"]
+authors = [""]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -13,5 +13,11 @@ huelib = "0.9.0"
 rand = "0.7.3"
 lazy_static = "1.4.0"
 crossbeam = "0.8.0"
-# steel = { path = "../../rustylang/lang/steel" }
-# steel_derive = { path = "../../rustylang/lang/steel_derive" }
+steel = { path = "./steel" }
+steel_derive = { path = "./steel_derive" }
+webbrowser = "0.5.5"
+Inflector = "0.11.4"
+mac-notification-sys = "0.3.0"
+"cocoa" = "0.19.1"
+"core-graphics" = "0.17.3"
+objc = "0.2.3"
