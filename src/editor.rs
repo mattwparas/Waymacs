@@ -54,6 +54,7 @@ pub struct Editor {
     quit_times: u8,
     quit_time_total: u8,
     highlighted_word: Option<String>,
+    keystroke_count: usize,
 }
 
 impl Editor {
@@ -105,9 +106,10 @@ impl Editor {
             cursor_position: Position::default(),
             offset: Position::default(),
             status_message: StatusMessage::from(initial_status),
-            quit_times: quit_times,
+            quit_times,
             quit_time_total: quit_times,
             highlighted_word: None,
+            keystroke_count: 0,
         }
     }
 
@@ -289,14 +291,18 @@ impl Editor {
             Key::Char(c) => {
                 // let random_number = rand::thread_rng()
 
-                let random_number = {
-                    let mut range = rand::thread_rng();
-                    range.gen_range(20, 27)
-                };
+                // let random_number = {
+                //     let mut range = rand::thread_rng();
+                //     range.gen_range(0, )
+                // };
 
-                if random_number == 25 {
-                    // self.do_you_want_to_purchase_sublime()
-                    // crate::utilities::show_purchase_prompt();
+                // if random_number == 25 {
+                //     self.do_you_want_to_purchase_sublime()
+                // }
+
+                if self.keystroke_count == 50 {
+                    self.do_you_want_to_purchase_sublime();
+                    self.keystroke_count = 0;
                 }
 
                 let char_number = self.document.insert(&self.cursor_position, c);
@@ -328,6 +334,7 @@ impl Editor {
             | Key::Home => self.move_cursor(pressed_key),
             _ => (),
         }
+        self.keystroke_count += 1;
         self.scroll();
         if self.quit_times < self.quit_time_total {
             self.quit_times = self.quit_time_total;

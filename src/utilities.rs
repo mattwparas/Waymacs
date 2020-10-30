@@ -93,7 +93,7 @@ fn light_off(bridge: &Bridge, light_id: impl AsRef<str>) {
     };
 }
 
-pub fn show_purchase_prompt() {
+pub fn _show_purchase_prompt() {
     unsafe {
         let alert: *const Object = msg_send!(class!(NSAlert), alloc);
         let alert: *const Object = msg_send!(alert, init);
@@ -109,10 +109,16 @@ pub fn show_purchase_prompt() {
             .init_str(&"Purchase".to_string())
             .autorelease();
 
+        // let nil: *const Object = NSni
+
         let _alert_id: id = msg_send!(alert, setMessageText: alert_title);
         let _alert_id: id = msg_send!(alert, setInformativeText: alert_body);
         let _alert_id: id = msg_send!(alert, addButtonWithTitle: alert_purchase_button_text);
         let _alert_id: id = msg_send!(alert, addButtonWithTitle: alert_ok_button_text);
         let _alert_id: id = msg_send!(alert, runModal);
+
+        // let window = alert.
+
+        // let _alert_id: id = msg_send!(alert, orderOut: nil);
     }
 }
