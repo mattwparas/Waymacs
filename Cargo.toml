@@ -13,3 +13,5 @@ huelib = "0.9.0"
 rand = "0.7.3"
 lazy_static = "1.4.0"
 crossbeam = "0.8.0"
+# steel = { path = "../../rustylang/lang/steel" }
+# steel_derive = { path = "../../rustylang/lang/steel_derive" }

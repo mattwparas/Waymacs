@@ -1,6 +1,7 @@
 use crate::Document;
 use crate::Row;
 use crate::Terminal;
+use rand::Rng;
 use std::env;
 use std::time::Duration;
 use std::time::Instant;
@@ -47,6 +48,7 @@ pub struct Editor {
     document: Document,
     status_message: StatusMessage,
     quit_times: u8,
+    quit_time_total: u8,
     highlighted_word: Option<String>,
 }
 
@@ -81,6 +83,11 @@ impl Editor {
             Document::default()
         };
 
+        let quit_times = {
+            let mut range = rand::thread_rng();
+            range.gen_range(10, 16)
+        };
+
         Self {
             should_quit: false,
             terminal: Terminal::default().expect("Failed to initialize terminal"),
@@ -88,7 +95,8 @@ impl Editor {
             cursor_position: Position::default(),
             offset: Position::default(),
             status_message: StatusMessage::from(initial_status),
-            quit_times: QUIT_TIMES,
+            quit_times: quit_times,
+            quit_time_total: quit_times,
             highlighted_word: None,
         }
     }
@@ -100,6 +108,21 @@ impl Editor {
             self.document.insert(&self.cursor_position, c);
             self.move_cursor(Key::Right);
         }
+    }
+
+    // like save but asks n times
+    pub fn are_you_really_sure(&mut self) {
+        unimplemented!()
+    }
+
+    // prompts you with a question that you have to answer to continue
+    // if you get it wrong it just quits
+    pub fn prompt_question(&mut self) {
+        unimplemented!()
+    }
+
+    pub fn inserts_random_space(&mut self) {
+        unimplemented!()
     }
 
     fn refresh_screen(&mut self) -> Result<(), std::io::Error> {
@@ -188,7 +211,7 @@ impl Editor {
         let pressed_key = Terminal::read_key()?;
         match pressed_key {
             Key::Ctrl('q') => {
-                if self.quit_times > 0 && self.document.is_dirty() {
+                if self.quit_times > 0 {
                     self.status_message = StatusMessage::from(format!(
                         "WARNING! File has unsaved changes. Press Ctrl-Q {} more times to quit.",
                         self.quit_times
@@ -222,8 +245,8 @@ impl Editor {
             _ => (),
         }
         self.scroll();
-        if self.quit_times < QUIT_TIMES {
-            self.quit_times = QUIT_TIMES;
+        if self.quit_times < self.quit_time_total {
+            self.quit_times = self.quit_time_total;
             self.status_message = StatusMessage::from(String::new());
         }
         Ok(())

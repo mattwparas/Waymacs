@@ -16,10 +16,12 @@ use crate::utilities::set_random_light;
 const WORKER_THREADS: usize = 1;
 // const SLEEP_TIME: u64 = 200;
 
+// "192.168.1.2"
+
 // This isn't amazing but it definitely gets the job done
 lazy_static! {
     static ref BRIDGE: Bridge = Bridge::new(
-        "192.168.1.2".parse().unwrap(),
+        env::var("HUE_BRIDGE_IP").unwrap().parse().unwrap(),
         env::var("HUE_TOKEN").unwrap()
     );
     // worker thread stack
@@ -32,13 +34,11 @@ lazy_static! {
 
     // Give all of the possible lights
     static ref CONTROL_LIGHTS: Vec<Light> = {
-        let username = env::var("HUE_TOKEN").unwrap();
-        let light_names = ["Hue Play 1", "Hue play 2"];
+        // let light_names = ["Hue Play 1", "Hue play 2"];
 
-        // Create a bridge with IP address and username.
-        let bridge = Bridge::new(IpAddr::V4(Ipv4Addr::new(192, 168, 1, 2)), username);
+        let light_names: Vec<String> = env::var("HUE_LIGHTS").unwrap().split(",").map(|x| x.to_string()).collect();
 
-        let all_lights = match bridge.get_all_lights() {
+        let all_lights = match BRIDGE.get_all_lights() {
             Ok(lights) => lights,
             Err(_) => {
                 // eprintln!("Failed to get all lights: {}", e);
@@ -55,7 +55,7 @@ lazy_static! {
 
             if light_names
                 .iter()
-                .any(|&light_name| light_name == light.name)
+                .any(|light_name| light_name.as_str() == light.name)
             {
                 control_lights.push(light.clone());
             }
